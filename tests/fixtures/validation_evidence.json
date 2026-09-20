@@ -1,0 +1,159 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-09-20T17:04:40.197973Z",
+  "model_id": "m1",
+  "version": "1.0.0",
+  "baseline": {
+    "model_id": "m1",
+    "version": "1.0.0",
+    "locked_metrics": {
+      "sensitivity": 0.9,
+      "specificity": 0.85,
+      "auc": 0.93,
+      "f1": 0.88,
+      "calibration_slope": 1.0
+    },
+    "baseline_date": "2026-01-01",
+    "dataset_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "risk_classification": "II",
+    "sample_size": 1000
+  },
+  "snapshot": {
+    "model_id": "m1",
+    "timestamp": "2026-03-01T00:00:00Z",
+    "metrics": {
+      "sensitivity": 0.88,
+      "auc": 0.95,
+      "extra": 0.5
+    },
+    "subgroup_breakdown": [
+      {
+        "subgroup": "age>65",
+        "metrics": {
+          "auc": 0.9
+        },
+        "sample_size": 120
+      }
+    ],
+    "sample_size": 500,
+    "drift_from_baseline": {
+      "sensitivity": -0.020000000000000018,
+      "auc": 0.019999999999999907
+    }
+  },
+  "drift": {
+    "model_id": "m1",
+    "snapshot_timestamp": "2026-03-01T00:00:00Z",
+    "metrics": [
+      {
+        "metric": "sensitivity",
+        "baseline_value": 0.9,
+        "snapshot_value": 0.88,
+        "delta": -0.020000000000000018,
+        "p_value": 0.23684856028158163,
+        "verdict": "drifted",
+        "confidence": 0.7631514397184184,
+        "band": "AMBIGUOUS",
+        "reasoning": "sensitivity delta -0.0200, drifted, confidence 0.76 (AMBIGUOUS). Flag for human interpretation: verdict 'drifted' but sample sizes give only moderate power."
+      },
+      {
+        "metric": "auc",
+        "baseline_value": 0.93,
+        "snapshot_value": 0.95,
+        "delta": 0.019999999999999907,
+        "p_value": 0.1338207800597215,
+        "verdict": "stable",
+        "confidence": 0.49864302745091044,
+        "band": "LOW",
+        "reasoning": "auc delta +0.0200, stable, confidence 0.50 (LOW). Insufficient evidence, no conclusion asserted."
+      }
+    ],
+    "overall_band": "LOW",
+    "requires_human_review": true,
+    "iec_62304_note": "IEC 62304 software safety class B assigned from FDA SaMD risk class II: class A = no injury possible, B = non-serious injury possible, C = death or serious injury possible. Classification is provisional pending hazard analysis by the manufacturer.",
+    "iso_14971_note": "ISO 14971: observed performance deviations are treated as hazardous situations. The risk control is human review of every flagged deviation before any deployment decision; this report is evidence, not a release decision."
+  },
+  "fairness": {
+    "model_id": "m1",
+    "threshold": 0.05,
+    "findings": [
+      {
+        "subgroup": "age>65",
+        "metric": "auc",
+        "baseline_value": 0.93,
+        "subgroup_value": 0.9,
+        "delta": -0.030000000000000027,
+        "verdict": "stable",
+        "flagged": false,
+        "confidence": 0.7858780221625611,
+        "band": "AMBIGUOUS",
+        "reasoning": "[age>65, n=120] auc delta -0.0300, stable, confidence 0.79 (AMBIGUOUS). Flag for human interpretation: verdict 'stable' but sample sizes give only moderate power."
+      }
+    ],
+    "any_flagged": false,
+    "aggregate_passed": true,
+    "note": "Subgroup flags may exist even when aggregate metrics pass; aggregate performance does not establish subgroup equity."
+  },
+  "pccp_status": {
+    "model_id": "m1",
+    "change_type": "retrain",
+    "decision": "insufficient information",
+    "rationale": "Description under 20 characters or no expected metric deltas supplied.",
+    "violated_boundaries": [],
+    "confidence_band": "LOW"
+  },
+  "model_card": {
+    "model_id": "m1",
+    "version": "1.0.0",
+    "intended_use": "triage",
+    "training_data_summary": "10k studies",
+    "performance_by_subgroup": [
+      {
+        "subgroup": "age>65",
+        "metrics": {
+          "auc": 0.9
+        },
+        "sample_size": 120
+      }
+    ],
+    "known_limitations": [
+      "pediatric"
+    ],
+    "pccp_reference": "PCCP-001",
+    "gmlp_checklist": {
+      "multidisciplinary_expertise": true,
+      "good_software_engineering": true,
+      "representative_data": true,
+      "independent_test_sets": true,
+      "reference_standard": true,
+      "design_fit_for_use": true,
+      "human_ai_team_focus": true,
+      "clinically_relevant_testing": true,
+      "clear_user_information": true,
+      "deployed_model_monitoring": true
+    },
+    "iec_62304_safety_class": "B",
+    "iso_14971_risk_controls": [
+      "human review"
+    ]
+  },
+  "iec_62304": {
+    "safety_class": "B",
+    "rationale": "IEC 62304 software safety class B assigned from FDA SaMD risk class II: class A = no injury possible, B = non-serious injury possible, C = death or serious injury possible. Classification is provisional pending hazard analysis by the manufacturer."
+  },
+  "iso_14971": {
+    "hazards": [
+      "sensitivity drift -0.0200 (AMBIGUOUS confidence)",
+      "auc drift +0.0200 (LOW confidence)"
+    ],
+    "risk_controls": [
+      "human review"
+    ],
+    "residual_risk_statement": "Residual risk is accepted only after a qualified reviewer disposes each flagged finding; this evidence package asserts no autonomous go/no-go decision (ISO 14971 clause 7/8)."
+  },
+  "evidence_id": "bc72f823-40a8-4b41-9cfc-ddb5bf96fb3f",
+  "requirement_ids": [
+    "REQ-1",
+    "SRS-3"
+  ]
+}

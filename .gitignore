@@ -16,3 +16,4 @@ htmlcov/
 node_modules/
 dashboard/dist/
 npm-debug.log*
+dashboard/tsconfig.tsbuildinfo
