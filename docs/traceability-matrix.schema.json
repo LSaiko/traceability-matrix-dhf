@@ -1,0 +1,533 @@
+{
+  "$defs": {
+    "ConfidenceBand": {
+      "enum": [
+        "HIGH",
+        "AMBIGUOUS",
+        "LOW"
+      ],
+      "title": "ConfidenceBand",
+      "type": "string"
+    },
+    "DesignOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^DO-\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "artifact_path": {
+          "minLength": 1,
+          "title": "Artifact Path",
+          "type": "string"
+        },
+        "requirement_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Requirement Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "artifact_path"
+      ],
+      "title": "DesignOutput",
+      "type": "object"
+    },
+    "Gap": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "title": "Item Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "missing_design_output",
+            "missing_verification",
+            "missing_validation",
+            "failed_verification",
+            "unmitigated_risk",
+            "orphan_design_output",
+            "orphan_evidence",
+            "unreviewed_validation"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "band": {
+          "$ref": "#/$defs/ConfidenceBand"
+        },
+        "reasoning": {
+          "title": "Reasoning",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "kind",
+        "severity",
+        "band",
+        "reasoning"
+      ],
+      "title": "Gap",
+      "type": "object"
+    },
+    "Iec62304Class": {
+      "enum": [
+        "A",
+        "B",
+        "C"
+      ],
+      "title": "Iec62304Class",
+      "type": "string"
+    },
+    "LinkKind": {
+      "enum": [
+        "implements",
+        "verifies",
+        "validates",
+        "mitigates"
+      ],
+      "title": "LinkKind",
+      "type": "string"
+    },
+    "Requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^(REQ|UN|SRS)-\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/RequirementLevel"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "rationale": {
+          "default": "",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "parent_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Id"
+        },
+        "iec_62304_class": {
+          "$ref": "#/$defs/Iec62304Class"
+        },
+        "acceptance_criteria": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptance Criteria",
+          "type": "array"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "approved",
+            "obsolete"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "level",
+        "text",
+        "iec_62304_class"
+      ],
+      "title": "Requirement",
+      "type": "object"
+    },
+    "RequirementLevel": {
+      "description": "IEC 62304 \u00a75.2 flavour: user need -> system requirement -> software requirement.",
+      "enum": [
+        "user_need",
+        "system",
+        "software"
+      ],
+      "title": "RequirementLevel",
+      "type": "string"
+    },
+    "RiskControl": {
+      "additionalProperties": false,
+      "description": "ISO 14971 hazard -> hazardous situation -> harm, with the control traced to requirements.",
+      "properties": {
+        "id": {
+          "pattern": "^RC-\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "hazard": {
+          "minLength": 1,
+          "title": "Hazard",
+          "type": "string"
+        },
+        "hazardous_situation": {
+          "default": "",
+          "title": "Hazardous Situation",
+          "type": "string"
+        },
+        "harm": {
+          "default": "",
+          "title": "Harm",
+          "type": "string"
+        },
+        "severity": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Severity",
+          "type": "integer"
+        },
+        "probability": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Probability",
+          "type": "integer"
+        },
+        "control_measure": {
+          "minLength": 1,
+          "title": "Control Measure",
+          "type": "string"
+        },
+        "requirement_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Requirement Ids",
+          "type": "array"
+        },
+        "verification_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Verification Ids",
+          "type": "array"
+        },
+        "residual_risk_acceptable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Residual Risk Acceptable"
+        }
+      },
+      "required": [
+        "id",
+        "hazard",
+        "severity",
+        "probability",
+        "control_measure"
+      ],
+      "title": "RiskControl",
+      "type": "object"
+    },
+    "TraceLink": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/LinkKind"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "band": {
+          "$ref": "#/$defs/ConfidenceBand"
+        },
+        "reasoning": {
+          "title": "Reasoning",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "target_id",
+        "kind",
+        "confidence",
+        "band",
+        "reasoning"
+      ],
+      "title": "TraceLink",
+      "type": "object"
+    },
+    "ValidationEvidenceRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^VAL-\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "ml-samd-validator",
+            "manual"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "evidence_id": {
+          "minLength": 1,
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "requirement_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Requirement Ids",
+          "type": "array"
+        },
+        "model_id": {
+          "minLength": 1,
+          "title": "Model Id",
+          "type": "string"
+        },
+        "overall_band": {
+          "$ref": "#/$defs/ConfidenceBand"
+        },
+        "requires_human_review": {
+          "title": "Requires Human Review",
+          "type": "boolean"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "raw": {
+          "additionalProperties": true,
+          "title": "Raw",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "evidence_id",
+        "model_id",
+        "overall_band",
+        "requires_human_review",
+        "generated_at",
+        "summary"
+      ],
+      "title": "ValidationEvidenceRecord",
+      "type": "object"
+    },
+    "VerificationRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^VER-\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "method": {
+          "enum": [
+            "test",
+            "inspection",
+            "analysis",
+            "demonstration"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "requirement_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Requirement Ids",
+          "type": "array"
+        },
+        "result": {
+          "enum": [
+            "pass",
+            "fail",
+            "blocked"
+          ],
+          "title": "Result",
+          "type": "string"
+        },
+        "executed_at": {
+          "format": "date-time",
+          "title": "Executed At",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "minLength": 1,
+          "title": "Evidence Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "method",
+        "result",
+        "executed_at",
+        "evidence_ref"
+      ],
+      "title": "VerificationRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "requirements": {
+      "items": {
+        "$ref": "#/$defs/Requirement"
+      },
+      "title": "Requirements",
+      "type": "array"
+    },
+    "design_outputs": {
+      "items": {
+        "$ref": "#/$defs/DesignOutput"
+      },
+      "title": "Design Outputs",
+      "type": "array"
+    },
+    "verifications": {
+      "items": {
+        "$ref": "#/$defs/VerificationRecord"
+      },
+      "title": "Verifications",
+      "type": "array"
+    },
+    "validations": {
+      "items": {
+        "$ref": "#/$defs/ValidationEvidenceRecord"
+      },
+      "title": "Validations",
+      "type": "array"
+    },
+    "risk_controls": {
+      "items": {
+        "$ref": "#/$defs/RiskControl"
+      },
+      "title": "Risk Controls",
+      "type": "array"
+    },
+    "links": {
+      "items": {
+        "$ref": "#/$defs/TraceLink"
+      },
+      "title": "Links",
+      "type": "array"
+    },
+    "gaps": {
+      "items": {
+        "$ref": "#/$defs/Gap"
+      },
+      "title": "Gaps",
+      "type": "array"
+    },
+    "coverage": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Coverage",
+      "type": "object"
+    },
+    "overall_band": {
+      "$ref": "#/$defs/ConfidenceBand"
+    },
+    "iec_62304_note": {
+      "title": "Iec 62304 Note",
+      "type": "string"
+    },
+    "iso_14971_note": {
+      "title": "Iso 14971 Note",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "generated_at",
+    "requirements",
+    "design_outputs",
+    "verifications",
+    "validations",
+    "risk_controls",
+    "links",
+    "gaps",
+    "coverage",
+    "overall_band",
+    "iec_62304_note",
+    "iso_14971_note"
+  ],
+  "title": "TraceabilityMatrix",
+  "type": "object"
+}
