@@ -18,7 +18,8 @@ cannot hold: the validation evidence changes after shipment because the model's 
 drifts. This tool keeps the matrix live. It ingests `ValidationEvidence` packages exported by
 [ml-samd-validator](https://github.com/LSaiko/ml-samd-validator), scores every trace link with
 an explicit confidence band, and hands each gap to a human reviewer with the reasoning attached.
-It never closes a gap on its own.
+Its role is the Archivist: it keeps the record and reports the gaps, it never closes one on
+its own.
 
 ## Contents
 
