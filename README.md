@@ -91,7 +91,6 @@ submission and, six months after launch, will need it again for the post-market 
 [![Dashboard: coverage tiles, traceability matrix with band chips, gap report](docs/dashboard.png)](https://LSaiko.github.io/traceability-matrix-dhf/)
 
 _Click the screenshot to open the live demo (seeded with synthetic data, no backend required)._
-[LSaiko.github.io/traceability-matrix-dhf](https://LSaiko.github.io/traceability-matrix-dhf/).
 
 ## Architecture
 
