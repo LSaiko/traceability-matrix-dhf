@@ -122,7 +122,7 @@ def test_from_validation_evidence_rejects_missing_evidence_id() -> None:
 
 
 def test_risk_index_and_bands() -> None:
-    assert RC.risk_index == 12 and RC.model_copy(update={"risk_index": 1}).risk_index == 1
+    assert RC.risk_index == 12 and RC.model_copy(update={"severity": 2}).risk_index == 6
     assert RiskControl.model_validate({**RC.model_dump(), "risk_index": 99}).risk_index == 12
     assert [band_for(c) for c in (0.8, 0.79, 0.55, 0.54)] == [
         ConfidenceBand.HIGH,

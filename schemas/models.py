@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import jsonschema
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 _HERE = Path(__file__).resolve().parent
 VALIDATION_EVIDENCE_SCHEMA_FILE = _HERE / "validation-evidence.schema.json"
@@ -154,12 +154,19 @@ class RiskControl(_Strict):
     requirement_ids: list[str] = Field(default_factory=list)
     verification_ids: list[str] = Field(default_factory=list)
     residual_risk_acceptable: bool | None = None
-    risk_index: int = 0  # derived; always overwritten with severity * probability
 
-    @model_validator(mode="after")
-    def _risk_index(self) -> RiskControl:
-        self.risk_index = self.severity * self.probability
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_risk_index(cls, data: Any) -> Any:
+        """Accept our own dumps back: risk_index is derived, never an input."""
+        return (
+            {k: v for k, v in data.items() if k != "risk_index"} if isinstance(data, dict) else data
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def risk_index(self) -> int:
+        return self.severity * self.probability
 
 
 class TraceLink(_Strict):
