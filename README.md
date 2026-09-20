@@ -88,7 +88,9 @@ submission and, six months after launch, will need it again for the post-market 
 - Every report carries IEC 62304 and ISO 14971 language and the disclaimer that it is evidence
   for a human reviewer, not a release decision.
 
-_Screenshot: docs/dashboard.png (to be added)._ Live demo (seeded, no backend):
+[![Dashboard: coverage tiles, traceability matrix with band chips, gap report](docs/dashboard.png)](https://LSaiko.github.io/traceability-matrix-dhf/)
+
+_Click the screenshot to open the live demo (seeded with synthetic data, no backend required)._
 [LSaiko.github.io/traceability-matrix-dhf](https://LSaiko.github.io/traceability-matrix-dhf/).
 
 ## Architecture
