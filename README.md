@@ -1,6 +1,11 @@
 # traceability-matrix-dhf
 
 [![CI](https://github.com/LSaiko/traceability-matrix-dhf/actions/workflows/ci.yml/badge.svg)](https://github.com/LSaiko/traceability-matrix-dhf/actions/workflows/ci.yml)
+[![Pages](https://github.com/LSaiko/traceability-matrix-dhf/actions/workflows/pages.yml/badge.svg)](https://github.com/LSaiko/traceability-matrix-dhf/actions/workflows/pages.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-22d3ee)](pyproject.toml)
+[![Pydantic v2](https://img.shields.io/badge/pydantic-v2-f97316)](https://docs.pydantic.dev/latest/)
+[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-22d3ee)](.github/workflows/ci.yml)
+[![21 CFR 820.30](https://img.shields.io/badge/21%20CFR%20820.30-94a3b8)](https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-820/subpart-C/section-820.30)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-22d3ee)](https://LSaiko.github.io/traceability-matrix-dhf/)
 
