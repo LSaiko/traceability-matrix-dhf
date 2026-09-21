@@ -219,6 +219,10 @@ missed link surfaces as a gap for a human to fix, which is the workflow the regu
   with three-band confidence).
 - [SaMD-Val-Kit](https://github.com/LSaiko/SaMD-Val-Kit): validation protocol templates and
   V&V planning for SaMD.
+- [part11-audit-trail](https://github.com/LSaiko/part11-audit-trail)
+  ([live demo](https://lsaiko.github.io/part11-audit-trail/)): the Documenter. Hash-chained,
+  append-only audit log and Ed25519 e-signatures (21 CFR Part 11, ALCOA+); its audit records
+  are consumable here as DHF evidence, and the traceability matrix itself is a signable record.
 
 ## Interview Q&A
 
