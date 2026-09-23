@@ -17,3 +17,6 @@ node_modules/
 dashboard/dist/
 npm-debug.log*
 dashboard/tsconfig.tsbuildinfo
+
+# local SQLite DHF store (DHF_DB_PATH default)
+data/

@@ -94,6 +94,18 @@ and never asserts it.
 | ISO 14971 (referenced by (g) risk analysis) | `RiskControl` | `mitigates` | `unmitigated_risk` |
 | (j) design history file | `TraceabilityMatrix` | - | the human disposition of every gap |
 
+## Persistence and the design history record
+
+`app/store.py` defines `TraceabilityStore` (`get` / `put` of a `DhfProject`). The server
+injects `SqliteStore` (one file at `DHF_DB_PATH`, one table per record type, columns
+mirroring the Pydantic fields) and the unit tests inject `InMemoryStore`. Only the design
+inputs and evidence are stored. Links, confidence bands and gaps are recomputed on every read,
+so a stored traceability claim cannot outlive the records behind it. That matters for IEC
+62304 §5.1.1 and ISO 14971 §7.3, where the trace is only as good as the evidence it points to.
+The store keeps current state only. It has no revision history and no locking for concurrent
+writers, so it is not by itself a 21 CFR 820.30(j) / IEC 62304 §8 configuration-managed record
+(README, Persistence).
+
 ## Sibling integration
 
 `ml-samd-validator` (the Inspector) exports `ValidationEvidence` JSON with an `evidence_id`

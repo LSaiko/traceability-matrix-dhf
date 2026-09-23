@@ -33,6 +33,7 @@ its own.
 - [Architecture](#architecture)
 - [Setup](#setup)
 - [API](#api)
+- [Persistence](#persistence)
 - [Regulatory framing](#regulatory-framing)
 - [Interview talking points](#interview-talking-points)
 - [Related projects](#related-projects)
@@ -130,13 +131,15 @@ uvicorn app.main:app --reload          # http://127.0.0.1:8000/docs
 cd dashboard && npm ci && npm run dev  # seed mode unless VITE_API_BASE is set
 
 # checks (what CI runs)
-ruff check . && mypy app schemas && pytest --cov=app --cov=schemas --cov-branch
+ruff check . && mypy app schemas && pytest           # fast, in-memory store
+pytest -m integration                                  # SQLite store end to end
 cd dashboard && npx tsc --noEmit && npm run build
 ```
 
 | Env var | Where | Purpose |
 |---|---|---|
 | `ALLOWED_ORIGINS` | backend | Comma-separated CORS origins (default `*`) |
+| `DHF_DB_PATH` | backend | SQLite file for the DHF store (default `data/dhf.db`) |
 | `VITE_API_BASE` | dashboard | Backend URL; unset = built-in seed matrix |
 | `VITE_PROJECT_ID` | dashboard | Project to display (default: seed project) |
 | `VITE_BASE` | dashboard build | URL subpath, e.g. `/traceability-matrix-dhf/` for Pages |
@@ -153,7 +156,35 @@ cd dashboard && npx tsc --noEmit && npm run build
 | GET | `/project/{id}/matrix` | `?format=json\|markdown` | `TraceabilityMatrix` or Markdown report |
 | GET | `/project/{id}/gaps` | | `{overall_band, gaps[]}` |
 
-Unknown project ids return 404. The store is in-memory (`# ponytail:` note in `app/main.py`).
+Unknown project ids return 404. Records are stored in SQLite; see [Persistence](#persistence).
+
+## Persistence
+
+The API reads and writes through a `TraceabilityStore` (`app/store.py`) injected per request.
+The server uses `SqliteStore`: one SQLite file at `DHF_DB_PATH` (default `data/dhf.db`,
+gitignored), with one table per stored record type (`requirement`, `design_output`,
+`verification_record`, `validation_evidence_record`, `risk_control`, plus `project`) whose
+columns match the Pydantic fields one to one. Trace links and gaps are not stored:
+`build_matrix` derives them on every read, so the gap report always reflects the current
+records. The schema is created on startup by an idempotent `CREATE TABLE IF NOT EXISTS`
+migration (`python -m app.store` runs it standalone). The unit suite injects `InMemoryStore`;
+`pytest -m integration` tests the SQLite path, including a round trip that must come back
+byte-identical after a restart. The Pages demo has no backend and is unaffected.
+
+Known limits, stated honestly:
+
+- **No concurrent-write story.** Each request's write is one SQLite transaction, but nothing
+  locks the read-modify-write around it. Two simultaneous writes to the same project: the last
+  writer wins, and two evidence uploads at the same moment can both be numbered `VAL-n`. Only
+  single-writer use has been tested.
+- **Overwrite, not history.** A write replaces the project's current records. There is no
+  revision history or audit trail, which a production DHF needs for 21 CFR 820.30(j), 21 CFR
+  Part 11, the IEC 62304 §8 configuration management record and the ISO 14971 §4.5 risk
+  management file. [part11-audit-trail](https://github.com/LSaiko/part11-audit-trail) covers
+  that layer.
+- **No schema evolution.** The migration only creates missing tables. If a model gains a
+  field, an existing database needs a manual `ALTER TABLE` or a fresh file.
+- **One file, one host.** No backup, replication or encryption at rest.
 
 ## Regulatory framing
 
@@ -250,8 +281,8 @@ high severity when severity x probability is 12 or more. In the seeded demo RC-4
 bias) has no requirement at all and is the highest-ranked gap; a control whose only
 verification failed would rank the same way.
 
-**How would you take this from a portfolio project to a real DHF tool?** Persist the store
-(the API is already keyed for it), add reviewer identity and a signed disposition log on every
+**How would you take this from a portfolio project to a real DHF tool?** Add write locking
+and revision history to the SQLite store (see [Persistence](#persistence)), add reviewer identity and a signed disposition log on every
 gap so the matrix becomes tamper-evident, version each `TraceabilityMatrix` export against the
 DHF revision it was generated from, and let `requirement_ids` on incoming evidence be checked
 against the requirements' acceptance criteria rather than just their ids so the validation

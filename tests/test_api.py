@@ -6,14 +6,16 @@ from pydantic import BaseModel
 from test_core import CLEAN
 from test_schemas import EVIDENCE, RC, REQ, VER
 
-from app.main import app, projects
+from app.main import app, get_store
+from app.store import InMemoryStore
 
 client = TestClient(app)
 PID = CLEAN.project_id
 
 
 def setup_function() -> None:
-    projects.clear()
+    store = InMemoryStore()
+    app.dependency_overrides[get_store] = lambda: store
 
 
 def dump(obj: BaseModel) -> dict[str, Any]:
