@@ -52,6 +52,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# fast in-memory suite by default; CI also runs `pytest -m integration` (SQLite)
+addopts = "-m 'not integration'"
+markers = ["integration: exercises the SQLite store on disk"]
 
 [tool.coverage.report]
 exclude_also = ["if __name__ == .__main__.:"]

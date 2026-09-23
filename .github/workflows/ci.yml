@@ -19,7 +19,12 @@ jobs:
       - run: pip install -e .[dev]
       - run: ruff check .
       - run: mypy app schemas
-      - run: pytest --cov=app --cov=schemas --cov-branch --cov-report=term-missing
+      - name: unit suite (in-memory store)
+        run: pytest --cov=app --cov=schemas --cov-branch
+      - name: integration suite (SQLite store), combined coverage must stay 100%
+        run: >-
+          pytest -m integration --cov=app --cov=schemas --cov-branch --cov-append
+          --cov-report=term-missing --cov-fail-under=100
 
   dashboard:
     runs-on: ubuntu-latest

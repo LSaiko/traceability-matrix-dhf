@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from typing import Annotated, Any
 
 import jsonschema
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
 from app.core import build_matrix
 from app.report import render_markdown
+from app.store import SqliteStore, TraceabilityStore, db_path
 from schemas import (
     ConfidenceBand,
     DesignOutput,
@@ -24,7 +27,14 @@ from schemas import (
     VerificationRecord,
 )
 
-app = FastAPI(title="traceability-matrix-dhf")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    app.state.store = SqliteStore(db_path())
+    yield
+
+
+app = FastAPI(title="traceability-matrix-dhf", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
@@ -32,8 +42,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ponytail: in-memory store, swap for sqlite if persistence needed
-projects: dict[str, DhfProject] = {}
+
+def get_store(request: Request) -> TraceabilityStore:
+    store: TraceabilityStore = request.app.state.store
+    return store
+
+
+Store = Annotated[TraceabilityStore, Depends(get_store)]
 
 Item = Requirement | DesignOutput | VerificationRecord | RiskControl
 # ponytail: the id pattern on each model is the discriminator; pydantic's union picks the type.
@@ -45,10 +60,11 @@ _LIST_FOR: dict[type, str] = {
 }
 
 
-def _project(project_id: str) -> DhfProject:
-    if project_id not in projects:
+def _project(store: TraceabilityStore, project_id: str) -> DhfProject:
+    project = store.get(project_id)
+    if project is None:
         raise HTTPException(404, f"no project {project_id!r}")
-    return projects[project_id]
+    return project
 
 
 def _upsert(items: list[Any], item: Any) -> None:
@@ -65,25 +81,29 @@ def health() -> dict[str, str]:
 
 
 @app.post("/project")
-def post_project(project: DhfProject) -> DhfProject:
-    projects[project.project_id] = project
+def post_project(project: DhfProject, store: Store) -> DhfProject:
+    store.put(project)
     return project
 
 
 @app.get("/project/{project_id}")
-def get_project(project_id: str) -> DhfProject:
-    return _project(project_id)
+def get_project(project_id: str, store: Store) -> DhfProject:
+    return _project(store, project_id)
 
 
 @app.post("/project/{project_id}/items")
-def post_item(project_id: str, item: Item) -> Item:
-    _upsert(getattr(_project(project_id), _LIST_FOR[type(item)]), item)
+def post_item(project_id: str, item: Item, store: Store) -> Item:
+    project = _project(store, project_id)
+    _upsert(getattr(project, _LIST_FOR[type(item)]), item)
+    store.put(project)
     return item
 
 
 @app.post("/project/{project_id}/evidence")
-def post_evidence(project_id: str, payload: dict[str, Any]) -> ValidationEvidenceRecord:
-    project = _project(project_id)
+def post_evidence(
+    project_id: str, payload: dict[str, Any], store: Store
+) -> ValidationEvidenceRecord:
+    project = _project(store, project_id)
     try:
         record = ValidationEvidenceRecord.from_validation_evidence(
             payload, f"VAL-{len(project.validations) + 1}"
@@ -91,18 +111,21 @@ def post_evidence(project_id: str, payload: dict[str, Any]) -> ValidationEvidenc
     except jsonschema.ValidationError as e:
         raise HTTPException(400, f"ValidationEvidence rejected: {e.message}") from e
     project.validations.append(record)
+    store.put(project)
     return record
 
 
 @app.get("/project/{project_id}/matrix", response_model=None)
-def get_matrix(project_id: str, format: str = "json") -> TraceabilityMatrix | PlainTextResponse:
-    matrix = build_matrix(_project(project_id))
+def get_matrix(
+    project_id: str, store: Store, format: str = "json"
+) -> TraceabilityMatrix | PlainTextResponse:
+    matrix = build_matrix(_project(store, project_id))
     if format == "markdown":
         return PlainTextResponse(render_markdown(matrix), media_type="text/markdown")
     return matrix
 
 
 @app.get("/project/{project_id}/gaps")
-def get_gaps(project_id: str) -> dict[str, ConfidenceBand | list[Gap]]:
-    matrix = build_matrix(_project(project_id))
+def get_gaps(project_id: str, store: Store) -> dict[str, ConfidenceBand | list[Gap]]:
+    matrix = build_matrix(_project(store, project_id))
     return {"overall_band": matrix.overall_band, "gaps": matrix.gaps}
