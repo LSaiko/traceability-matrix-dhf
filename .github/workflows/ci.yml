@@ -11,8 +11,8 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -32,8 +32,8 @@ jobs:
       run:
         working-directory: dashboard
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -41,3 +41,16 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run build
+
+  contract:
+    # CLAUDE.md: schemas/validation-evidence.schema.json is the ingestion contract and
+    # must stay byte-identical to the sibling ml-samd-validator's docs/ copy.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: LSaiko/ml-samd-validator
+          ref: main
+          path: sibling
+      - run: cmp schemas/validation-evidence.schema.json sibling/docs/validation-evidence.schema.json
