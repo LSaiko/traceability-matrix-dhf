@@ -58,10 +58,17 @@ comments) rather than learned:
 | AMBIGUOUS | 0.55-0.79 | flagged for human interpretation with reasoning; counted as coverage |
 | LOW | < 0.55 | insufficient evidence; **not** counted as coverage, gap raised where applicable |
 
-`overall_band` is the worst band across all links. Gap bands express how confident the
-Archivist is that the gap is real: the best surviving link for the item, or LOW when nothing
-exists. An `unreviewed_validation` gap is always AMBIGUOUS because the Inspector itself asked
-for human review.
+These bands route **links**. Gap bands use the same three names with a different question.
+
+`overall_band` is the worst band across all links. A gap's band is the Archivist's certainty that the gap is real, not the band of any link.
+HIGH: the gap is established deterministically from the records (no link of that kind
+exists, a recorded failed or blocked verification, an unknown or orphan id, a risk control
+with no traced requirement or no passing verification). AMBIGUOUS: the gap rests on
+uncertain evidence; today only `unreviewed_validation`, because the Inspector itself asked
+for human review. LOW is reserved for gaps the Archivist cannot assert and is not used by any
+gap kind today.
+Every gap, whatever its band, still needs a human disposition (21 CFR 820.30(j)); the band
+says how sure the Archivist is, not whether review can be skipped.
 
 ## IEC 62304 software lifecycle
 
@@ -89,7 +96,7 @@ and never asserts it.
 |---|---|---|---|
 | (c) design input | `Requirement` | target of every link | - |
 | (d) design output | `DesignOutput` | `implements` | `missing_design_output`, `orphan_design_output` |
-| (f) design verification | `VerificationRecord` | `verifies` | `missing_verification`, `failed_verification` |
+| (f) design verification | `VerificationRecord` | `verifies` | `missing_verification`, `failed_verification`, `blocked_verification` |
 | (g) design validation | `ValidationEvidenceRecord` | `validates` | `missing_validation`, `unreviewed_validation` |
 | ISO 14971 (referenced by (g) risk analysis) | `RiskControl` | `mitigates` | `unmitigated_risk` |
 | (j) design history file | `TraceabilityMatrix` | - | the human disposition of every gap |

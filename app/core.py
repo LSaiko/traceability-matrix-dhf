@@ -50,6 +50,7 @@ COVERAGE_KEYS: dict[str, LinkKind] = {
     "risk_control": LinkKind.MITIGATES,
 }
 BAND_ORDER = (ConfidenceBand.HIGH, ConfidenceBand.AMBIGUOUS, ConfidenceBand.LOW)
+SEVERITY_ORDER = ("high", "medium", "low")  # gaps are reported high severity first
 
 IEC_62304_NOTE = (
     "IEC 62304 software safety class {cls}: §5.1.1 requires the software development plan to "
@@ -96,8 +97,13 @@ def _orphan_link(source_id: str, target_id: str, kind: LinkKind) -> TraceLink:
 
 
 def _gap(
-    item_id: str, kind: GapKind, severity: str, why: str, band: ConfidenceBand = ConfidenceBand.LOW
+    item_id: str, kind: GapKind, severity: str, why: str, band: ConfidenceBand = ConfidenceBand.HIGH
 ) -> Gap:
+    """Gap band = the Archivist's certainty the gap is real, not the band of any link.
+
+    HIGH: established deterministically from the records. AMBIGUOUS: rests on uncertain
+    evidence (unreviewed validation). LOW is reserved; no gap kind uses it today.
+    """
     return Gap.model_validate(
         {"item_id": item_id, "kind": kind, "severity": severity, "band": band, "reasoning": why}
     )
@@ -254,14 +260,13 @@ def build_matrix(project: DhfProject) -> TraceabilityMatrix:
             gaps.append(_risk_gap(rc, "control measure has no passing verification"))
 
     approved = [r for r in project.requirements if r.status == "approved"]
-    failed = defaultdict(list)
+    verdicts: defaultdict[str, defaultdict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     for ver in project.verifications:
-        if ver.result == "fail":
-            for rid in ver.requirement_ids:
-                failed[rid].append(ver.id)
+        for rid in ver.requirement_ids:
+            verdicts[rid][ver.result].append(ver.id)
     for req in approved:
         kinds = best[req.id]
-        band = band_for(max(kinds.values())) if kinds else ConfidenceBand.LOW
+        by_result = verdicts[req.id]
         software = req.level is RequirementLevel.SOFTWARE
         if LinkKind.IMPLEMENTS not in kinds:
             gaps.append(
@@ -270,7 +275,6 @@ def build_matrix(project: DhfProject) -> TraceabilityMatrix:
                     "missing_design_output",
                     "high" if software else "medium",
                     f"no design output implements {req.id} (21 CFR 820.30(d))",
-                    band,
                 )
             )
         if LinkKind.VERIFIES not in kinds:
@@ -280,17 +284,25 @@ def build_matrix(project: DhfProject) -> TraceabilityMatrix:
                     "missing_verification",
                     "high",
                     f"no verification record covers {req.id} (21 CFR 820.30(f))",
-                    band,
                 )
             )
-        if req.id in failed:
+        if by_result["fail"]:  # also covers fail + blocked: reported once, as the failure
             gaps.append(
                 _gap(
                     req.id,
                     "failed_verification",
                     "high",
-                    f"{', '.join(failed[req.id])} failed against {req.id}",
-                    band,
+                    f"{', '.join(by_result['fail'])} failed against {req.id}",
+                )
+            )
+        elif by_result["blocked"] and not by_result["pass"]:
+            gaps.append(
+                _gap(
+                    req.id,
+                    "blocked_verification",
+                    "high",
+                    f"{', '.join(by_result['blocked'])} blocked; no verification evidence "
+                    f"covers {req.id} (21 CFR 820.30(f))",
                 )
             )
         if LinkKind.VALIDATES not in kinds:
@@ -300,7 +312,6 @@ def build_matrix(project: DhfProject) -> TraceabilityMatrix:
                     "missing_validation",
                     "low" if software else "medium",
                     f"no validation evidence covers {req.id} (21 CFR 820.30(g))",
-                    band,
                 )
             )
 
@@ -323,7 +334,7 @@ def build_matrix(project: DhfProject) -> TraceabilityMatrix:
         validations=project.validations,
         risk_controls=project.risk_controls,
         links=links,
-        gaps=gaps,
+        gaps=sorted(gaps, key=lambda g: SEVERITY_ORDER.index(g.severity)),  # stable sort
         coverage=coverage,
         overall_band=overall,
         iec_62304_note=IEC_62304_NOTE.format(

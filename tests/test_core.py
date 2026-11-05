@@ -93,10 +93,27 @@ def test_failed_and_blocked_verification() -> None:
     assert f.reasoning == "failed verification does not evidence coverage"
     assert (b.confidence, b.band) == (0.5, ConfidenceBand.LOW) and "blocked" in b.reasoning
     assert m.overall_band is ConfidenceBand.LOW and m.coverage["verification"] == 0.0
-    # gap band reflects the best surviving link (DO-1 implements at 0.9 -> HIGH)
+    # a recorded failure / block is certain from the records -> HIGH gap band
     (gap,) = [g for g in m.gaps if g.kind == "failed_verification"]
     assert (gap.item_id, gap.severity, gap.band) == ("REQ-1", "high", ConfidenceBand.HIGH)
+    (gap,) = [g for g in m.gaps if g.kind == "blocked_verification"]
+    assert (gap.item_id, gap.severity, gap.band) == ("SRS-3", "high", ConfidenceBand.HIGH)
+    assert (
+        gap.reasoning == "VER-2 blocked; no verification evidence covers SRS-3 (21 CFR 820.30(f))"
+    )
     assert ("RC-1", "unmitigated_risk", "high") in kinds(m.gaps)  # VER-1 no longer passes
+    assert all(g.band is ConfidenceBand.HIGH for g in m.gaps)
+
+
+def test_blocked_verification_only_when_nothing_passed_or_failed() -> None:
+    blocked = VER.model_copy(update={"id": "VER-2", "result": "blocked"})
+    failed = VER.model_copy(update={"id": "VER-3", "result": "fail"})
+    for vers, expect in (
+        ([VER, blocked], set()),  # a passing verification covers it
+        ([failed, blocked], {"failed_verification"}),  # reported once, as the failure
+    ):
+        m = build_matrix(CLEAN.model_copy(update={"verifications": vers}))
+        assert {g.kind for g in m.gaps if g.item_id in ("REQ-1", "SRS-3")} == expect
 
 
 def test_missing_links_per_requirement_level() -> None:
@@ -108,18 +125,19 @@ def test_missing_links_per_requirement_level() -> None:
         requirements=[UN, REQ, soft],
     )
     m = build_matrix(bare)
+    # no link at all: the overall band is LOW, but each gap is certain from the records
     assert m.overall_band is ConfidenceBand.LOW and all(
-        g.band is ConfidenceBand.LOW for g in m.gaps
+        g.band is ConfidenceBand.HIGH for g in m.gaps
     )
-    assert kinds(m.gaps) == [
-        ("UN-1", "missing_design_output", "medium"),
+    assert kinds(m.gaps) == [  # high severity first, stable within a severity
         ("UN-1", "missing_verification", "high"),
-        ("UN-1", "missing_validation", "medium"),
-        ("REQ-1", "missing_design_output", "medium"),
         ("REQ-1", "missing_verification", "high"),
-        ("REQ-1", "missing_validation", "medium"),
         ("SRS-9", "missing_design_output", "high"),
         ("SRS-9", "missing_verification", "high"),
+        ("UN-1", "missing_design_output", "medium"),
+        ("UN-1", "missing_validation", "medium"),
+        ("REQ-1", "missing_design_output", "medium"),
+        ("REQ-1", "missing_validation", "medium"),
         ("SRS-9", "missing_validation", "low"),
     ]
     assert "class C" in m.iec_62304_note
