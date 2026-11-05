@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -24,6 +25,7 @@ CHIP = {
     ConfidenceBand.AMBIGUOUS: "[AMBIGUOUS]",
     ConfidenceBand.LOW: "[LOW]",
 }
+UNESCAPED_PIPE = re.compile(r"(?<!\\)\|")
 DISCLAIMER = (
     "This matrix is produced by the Archivist role. It links design inputs to design outputs, "
     "verification, validation and ISO 14971 risk controls and scores each link by three-band "
@@ -34,14 +36,19 @@ DISCLAIMER = (
 )
 
 
+def _md_cell(text: str) -> str:
+    """User text must not add columns or rows to a DHF table: escape pipes, flatten newlines."""
+    return " ".join(text.replace("|", r"\|").splitlines())
+
+
 def _table(header: list[str], rows: list[list[str]]) -> str:
     lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
-    lines += ["| " + " | ".join(r) + " |" for r in rows]
+    lines += ["| " + " | ".join(map(_md_cell, r)) + " |" for r in rows]
     return "\n".join(lines)
 
 
 def _bullets(items: list[str]) -> str:
-    return "\n".join(f"- {i}" for i in items)
+    return "\n".join("- " + " ".join(i.splitlines()) for i in items)  # one bullet, one line
 
 
 def _cell(links: list[TraceLink]) -> str:
@@ -130,7 +137,10 @@ def render_pdf(m: TraceabilityMatrix, out: Path) -> Path:
     )
     for block in render_markdown(m).split("\n\n"):
         if block.startswith("|"):
-            rows = [[c.strip() for c in ln.strip("|").split("|")] for ln in block.splitlines()]
+            rows = [
+                [c.strip().replace(r"\|", "|") for c in UNESCAPED_PIPE.split(ln.strip("|"))]
+                for ln in block.splitlines()
+            ]
             cells = [[Paragraph(escape(c), styles["BodyText"]) for c in r] for r in rows]
             story.append(Table([cells[0], *cells[2:]], style=grid, hAlign="LEFT"))
         elif block.startswith("#"):
