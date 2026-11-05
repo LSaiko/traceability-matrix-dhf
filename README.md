@@ -70,7 +70,8 @@ submission and, six months after launch, will need it again for the post-market 
 4. **Hand it to a human.** `?format=markdown` renders the matrix, gap table and IEC 62304 /
    ISO 14971 notes for the DHF; the dashboard shows the same data with band colours. Every gap
    carries the Archivist's reasoning and the band expressing how sure it is that the gap is
-   real. The disposition is the reviewer's.
+   real: in the demo eight gaps are HIGH (established from the records) and the unreviewed
+   validation package is AMBIGUOUS. The disposition is the reviewer's.
 
 ## What it does
 
@@ -83,8 +84,8 @@ submission and, six months after launch, will need it again for the post-market 
 - Builds the requirements traceability matrix: `implements`, `verifies`, `validates` and
   `mitigates` links, each with a 0-1 confidence, a HIGH / AMBIGUOUS / LOW band and a one-line
   reasoning.
-- Detects eight gap kinds (missing design output / verification / validation, failed
-  verification, unmitigated risk, orphan design output, orphan evidence, unreviewed
+- Detects nine gap kinds (missing design output / verification / validation, failed
+  verification, blocked verification, unmitigated risk, orphan design output, orphan evidence, unreviewed
   validation) with severity and band, and reports per-kind coverage over approved requirements
   counting only non-LOW links.
 - Renders the matrix as Markdown, PDF and a versioned JSON export
@@ -206,7 +207,11 @@ Known limits, stated honestly:
   0.40) minus 0.10 if it asked for human review; a link to an id that does not exist is 0.10.
   HIGH (>= 0.80) passes through, AMBIGUOUS (0.55-0.79) is flagged for human interpretation
   with the reasoning attached, LOW (< 0.55) is insufficient evidence and never counts as
-  coverage. The matrix's overall band is the worst band present.
+  coverage. The matrix's overall band is the worst band present. Gap bands answer a
+  different question, how sure the Archivist is that the gap is real: HIGH when the records
+  establish it deterministically (a missing link, a failed or blocked verification, an
+  unknown id, an untraced or unverified risk control), AMBIGUOUS when it rests on uncertain
+  evidence (an unreviewed validation package); LOW is reserved and unused today.
 - **Archivist disclaimer**: the tool does not author requirements, does not invent or fabricate
   evidence, and never closes a gap. It produces the matrix, scores the links and flags the gaps.
 
@@ -263,8 +268,8 @@ different findings. A `missing_verification` gap says no record claims to verify
 requirement. A LOW `verifies` link says a record claims to but the evidence is inadequate: the
 test failed, was blocked, or points at a requirement that no longer exists. The matrix shows
 the link with its band and reasoning, the coverage figure excludes it, and the specific cause
-gets its own gap (`failed_verification`, `orphan_evidence`). Collapsing the two would hide
-which fix is needed.
+gets its own gap (`failed_verification`, `blocked_verification`, `orphan_evidence`), HIGH
+band because the records establish it. Collapsing the two would hide which fix is needed.
 
 **Why is an unreviewed validation package a gap when it is also a link?** ml-samd-validator
 sets `requires_human_review` when its own drift or fairness findings are not HIGH. Under ISO

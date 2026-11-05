@@ -56,14 +56,20 @@ validation report) are entered directly with the same shape and a free-form `evi
 | `missing_verification` | approved requirement with no `verifies` link | high |
 | `missing_validation` | approved requirement with no `validates` link | medium for user_need/system, low for software |
 | `failed_verification` | approved requirement with a `fail` verification | high |
+| `blocked_verification` | approved requirement whose verifications are `blocked`, none `pass` and none `fail` (a fail is reported once, as `failed_verification`) | high |
 | `unmitigated_risk` | risk control with no known requirement, or no passing verification | high if `risk_index` >= 12, else medium |
 | `orphan_design_output` | design output with no requirement, or an unknown one | low |
 | `orphan_evidence` | verification, validation or risk control citing an unknown requirement | medium |
 | `unreviewed_validation` | validation evidence with `requires_human_review` | medium, band AMBIGUOUS |
 
-Requirement-level gaps carry the band of the best link that does exist for that requirement
-(so a failed verification on an otherwise well-implemented requirement is a HIGH-band gap:
-the Archivist is confident the gap is real), or LOW when nothing exists.
+A gap's band is the Archivist's certainty that the gap is real, not the band of any link.
+HIGH: the gap is established deterministically from the records (no link of that kind
+exists, a recorded failed or blocked verification, an unknown or orphan id, a risk control
+with no traced requirement or no passing verification). AMBIGUOUS: the gap rests on
+uncertain evidence; today only `unreviewed_validation`, because the Inspector itself asked
+for human review. LOW is reserved for gaps the Archivist cannot assert and is not used by any
+gap kind today.
+Every kind above is HIGH except `unreviewed_validation` (AMBIGUOUS).
 
 ## Versioning
 

@@ -183,6 +183,7 @@ GapKind = Literal[
     "missing_verification",
     "missing_validation",
     "failed_verification",
+    "blocked_verification",
     "unmitigated_risk",
     "orphan_design_output",
     "orphan_evidence",

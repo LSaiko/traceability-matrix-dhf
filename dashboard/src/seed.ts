@@ -592,18 +592,25 @@ export const seedMatrix: Matrix = {
   ],
   "gaps": [
     {
+      "item_id": "RC-4",
+      "kind": "unmitigated_risk",
+      "severity": "high",
+      "band": "HIGH",
+      "reasoning": "Automation bias: control measure is not traced to any requirement"
+    },
+    {
+      "item_id": "SRS-2",
+      "kind": "failed_verification",
+      "severity": "high",
+      "band": "HIGH",
+      "reasoning": "VER-2 failed against SRS-2"
+    },
+    {
       "item_id": "VAL-1",
       "kind": "unreviewed_validation",
       "severity": "medium",
       "band": "AMBIGUOUS",
       "reasoning": "cxr-pneumothorax v1.2.0: drift AMBIGUOUS over 2 metric(s), requires human review, fairness flagged=False; a qualified reviewer must disposition it"
-    },
-    {
-      "item_id": "RC-4",
-      "kind": "unmitigated_risk",
-      "severity": "high",
-      "band": "LOW",
-      "reasoning": "Automation bias: control measure is not traced to any requirement"
     },
     {
       "item_id": "UN-1",
@@ -632,13 +639,6 @@ export const seedMatrix: Matrix = {
       "severity": "low",
       "band": "HIGH",
       "reasoning": "no validation evidence covers SRS-1 (21 CFR 820.30(g))"
-    },
-    {
-      "item_id": "SRS-2",
-      "kind": "failed_verification",
-      "severity": "high",
-      "band": "HIGH",
-      "reasoning": "VER-2 failed against SRS-2"
     },
     {
       "item_id": "SRS-2",
