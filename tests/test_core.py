@@ -111,15 +111,15 @@ def test_missing_links_per_requirement_level() -> None:
     assert m.overall_band is ConfidenceBand.LOW and all(
         g.band is ConfidenceBand.LOW for g in m.gaps
     )
-    assert kinds(m.gaps) == [
-        ("UN-1", "missing_design_output", "medium"),
+    assert kinds(m.gaps) == [  # high severity first, stable within a severity
         ("UN-1", "missing_verification", "high"),
-        ("UN-1", "missing_validation", "medium"),
-        ("REQ-1", "missing_design_output", "medium"),
         ("REQ-1", "missing_verification", "high"),
-        ("REQ-1", "missing_validation", "medium"),
         ("SRS-9", "missing_design_output", "high"),
         ("SRS-9", "missing_verification", "high"),
+        ("UN-1", "missing_design_output", "medium"),
+        ("UN-1", "missing_validation", "medium"),
+        ("REQ-1", "missing_design_output", "medium"),
+        ("REQ-1", "missing_validation", "medium"),
         ("SRS-9", "missing_validation", "low"),
     ]
     assert "class C" in m.iec_62304_note

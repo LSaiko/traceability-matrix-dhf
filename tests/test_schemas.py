@@ -121,6 +121,18 @@ def test_from_validation_evidence_rejects_missing_evidence_id() -> None:
         ValidationEvidenceRecord.from_validation_evidence(payload)
 
 
+def test_pccp_decision_with_sop_gaps_ingests() -> None:
+    """ml-samd-validator 6bc1e46 added PccpDecision.sop_gaps to the ingestion contract."""
+    pccp = {**EVIDENCE["pccp_status"], "sop_gaps": ["SOP-12 retraining trigger undefined"]}
+    rec = ValidationEvidenceRecord.from_validation_evidence({**EVIDENCE, "pccp_status": pccp})
+    assert rec.raw["pccp_status"]["sop_gaps"] == pccp["sop_gaps"]
+
+
+def test_project_rejects_duplicate_item_ids() -> None:
+    with pytest.raises(ValidationError, match="duplicate id in requirements"):
+        PROJECT.model_validate({**PROJECT.model_dump(), "requirements": [REQ, REQ]})
+
+
 def test_risk_index_and_bands() -> None:
     assert RC.risk_index == 12 and RC.model_copy(update={"severity": 2}).risk_index == 6
     assert RiskControl.model_validate({**RC.model_dump(), "risk_index": 99}).risk_index == 12

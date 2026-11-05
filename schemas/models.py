@@ -210,6 +210,14 @@ class DhfProject(_Strict):
     validations: list[ValidationEvidenceRecord] = Field(default_factory=list)
     risk_controls: list[RiskControl] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def _unique_ids(self) -> DhfProject:
+        """Each DHF item id is a primary key: duplicates would emit duplicate links and gaps."""
+        for name, items in self:  # every list field on DhfProject is an item list
+            if isinstance(items, list) and len(items) != len({i.id for i in items}):
+                raise ValueError(f"duplicate id in {name}")
+        return self
+
 
 class TraceabilityMatrix(_Strict):
     project_id: str

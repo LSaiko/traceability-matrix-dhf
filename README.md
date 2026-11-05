@@ -149,10 +149,10 @@ cd dashboard && npx tsc --noEmit && npm run build
 | Method | Path | Body / query | Returns |
 |---|---|---|---|
 | GET | `/health` | | `{"status": "ok"}` |
-| POST | `/project` | `DhfProject` | stored project (upsert by `project_id`) |
+| POST | `/project` | `DhfProject` | stored project (upsert by `project_id`); 422 on a duplicate item id within a list |
 | GET | `/project/{id}` | | `DhfProject` |
 | POST | `/project/{id}/items` | `Requirement` / `DesignOutput` / `VerificationRecord` / `RiskControl` (type from id prefix) | stored item (upsert by id) |
-| POST | `/project/{id}/evidence` | raw `ValidationEvidence` JSON from ml-samd-validator | `ValidationEvidenceRecord` as `VAL-n`; 400 with the schema error if rejected |
+| POST | `/project/{id}/evidence` | raw `ValidationEvidence` JSON from ml-samd-validator | `ValidationEvidenceRecord` as `VAL-n` (n = highest existing + 1); 400 with the schema error if rejected, or on NaN/Infinity |
 | GET | `/project/{id}/matrix` | `?format=json\|markdown` | `TraceabilityMatrix` or Markdown report |
 | GET | `/project/{id}/gaps` | | `{overall_band, gaps[]}` |
 
@@ -162,7 +162,8 @@ Unknown project ids return 404. Records are stored in SQLite; see [Persistence](
 
 The API reads and writes through a `TraceabilityStore` (`app/store.py`) injected per request.
 The server uses `SqliteStore`: one SQLite file at `DHF_DB_PATH` (default `data/dhf.db`,
-gitignored), with one table per stored record type (`requirement`, `design_output`,
+resolved relative to the process working directory, so start `uvicorn` from the repo root
+or set an absolute path; gitignored), with one table per stored record type (`requirement`, `design_output`,
 `verification_record`, `validation_evidence_record`, `risk_control`, plus `project`) whose
 columns match the Pydantic fields one to one. Trace links and gaps are not stored:
 `build_matrix` derives them on every read, so the gap report always reflects the current

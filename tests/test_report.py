@@ -41,6 +41,18 @@ def test_markdown_empty_sections() -> None:
     assert "_No gaps detected." in render_markdown(build_matrix(CLEAN))
 
 
+def test_user_text_cannot_forge_rows(tmp_path: Path) -> None:
+    rc = PROJECT.risk_controls[0].model_copy(
+        update={"hazard": "a | b\n| FORGED | row |", "requirement_ids": []}
+    )
+    m = build_matrix(PROJECT.model_copy(update={"risk_controls": [rc]}))
+    md = render_markdown(m)
+    (row,) = [ln for ln in md.splitlines() if ln.startswith("| RC-1 |")]
+    assert r"a \| b \| FORGED \| row \|" in row and row.count(" | ") == 4
+    assert not any(ln.startswith("| FORGED") for ln in md.splitlines())
+    assert render_pdf(m, tmp_path / "m.pdf").stat().st_size > 1024
+
+
 def test_pdf_written(tmp_path: Path) -> None:
     out = render_pdf(MATRIX, tmp_path / "matrix.pdf")
     assert out.exists() and out.stat().st_size > 1024

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -105,9 +106,13 @@ def post_evidence(
 ) -> ValidationEvidenceRecord:
     project = _project(store, project_id)
     try:
-        record = ValidationEvidenceRecord.from_validation_evidence(
-            payload, f"VAL-{len(project.validations) + 1}"
-        )
+        json.dumps(payload, allow_nan=False)  # raw is stored verbatim; JSON has no NaN/Infinity
+    except ValueError as e:
+        raise HTTPException(400, "ValidationEvidence rejected: non-finite number") from e
+    # ponytail: ids are never reused; next = 1 + highest VAL number, so gaps in numbering are safe.
+    n = max((int(v.id.removeprefix("VAL-")) for v in project.validations), default=0) + 1
+    try:
+        record = ValidationEvidenceRecord.from_validation_evidence(payload, f"VAL-{n}")
     except jsonschema.ValidationError as e:
         raise HTTPException(400, f"ValidationEvidence rejected: {e.message}") from e
     project.validations.append(record)

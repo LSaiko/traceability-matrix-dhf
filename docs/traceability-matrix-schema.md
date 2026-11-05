@@ -43,7 +43,7 @@ validation report) are entered directly with the same shape and a free-form `evi
 | `validations` | `ValidationEvidenceRecord[]` | 820.30(g). See ingestion contract above. |
 | `risk_controls` | `RiskControl[]` | ISO 14971 §7. `RC-n`, hazard / hazardous situation / harm, `severity` and `probability` 1-5, `risk_index` = product (derived, ignored on input), `control_measure`, `requirement_ids` that implement it, `verification_ids` that verify it, `residual_risk_acceptable` (manufacturer's statement, may be null). |
 | `links` | `TraceLink[]` | `source_id -> target_id` with `kind` (`implements`, `verifies`, `validates`, `mitigates`), `confidence` 0-1, `band`, `reasoning`. |
-| `gaps` | `Gap[]` | `item_id`, `kind` (see below), `severity` high/medium/low, `band`, `reasoning`. |
+| `gaps` | `Gap[]` | `item_id`, `kind` (see below), `severity` high/medium/low, `band`, `reasoning`. Ordered high severity first (stable within a severity). |
 | `coverage` | object | Fraction of **approved** requirements with at least one non-LOW link per kind: `design_output`, `verification`, `validation`, `risk_control`. |
 | `overall_band` | HIGH / AMBIGUOUS / LOW | Worst band across all links (LOW when there are none). |
 | `iec_62304_note`, `iso_14971_note` | string | Standards framing for the report; see `docs/architecture.md`. |

@@ -95,6 +95,29 @@ def test_items_upsert_by_id_prefix() -> None:
     assert client.post(f"/project/{PID}/items", json={"id": "XX-1"}).status_code == 422
 
 
+def test_evidence_id_follows_highest_existing_val_number() -> None:
+    held = CLEAN.validations[0].model_copy(update={"id": "VAL-2"})
+    client.post("/project", json=dump(CLEAN.model_copy(update={"validations": [held]})))
+    assert client.post(f"/project/{PID}/evidence", json=EVIDENCE).json()["id"] == "VAL-3"
+
+
+def test_duplicate_item_ids_are_422() -> None:
+    body = dump(CLEAN)
+    body["requirements"] *= 2
+    assert client.post("/project", json=body).status_code == 422
+    assert client.get(f"/project/{PID}").status_code == 404
+
+
+def test_non_finite_evidence_is_400() -> None:
+    client.post("/project", json=dump(CLEAN))
+    body = json.dumps({**EVIDENCE, "version": float("nan")})  # allow_nan default emits NaN
+    r = client.post(
+        f"/project/{PID}/evidence", content=body, headers={"content-type": "application/json"}
+    )
+    assert r.status_code == 400 and "non-finite" in r.json()["detail"]
+    assert len(client.get(f"/project/{PID}").json()["validations"]) == 1
+
+
 def test_bad_evidence_is_400_with_schema_message() -> None:
     client.post("/project", json=dump(CLEAN))
     payload = {k: v for k, v in EVIDENCE.items() if k != "evidence_id"}

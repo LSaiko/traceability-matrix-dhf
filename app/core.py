@@ -50,6 +50,7 @@ COVERAGE_KEYS: dict[str, LinkKind] = {
     "risk_control": LinkKind.MITIGATES,
 }
 BAND_ORDER = (ConfidenceBand.HIGH, ConfidenceBand.AMBIGUOUS, ConfidenceBand.LOW)
+SEVERITY_ORDER = ("high", "medium", "low")  # gaps are reported high severity first
 
 IEC_62304_NOTE = (
     "IEC 62304 software safety class {cls}: §5.1.1 requires the software development plan to "
@@ -323,7 +324,7 @@ def build_matrix(project: DhfProject) -> TraceabilityMatrix:
         validations=project.validations,
         risk_controls=project.risk_controls,
         links=links,
-        gaps=gaps,
+        gaps=sorted(gaps, key=lambda g: SEVERITY_ORDER.index(g.severity)),  # stable sort
         coverage=coverage,
         overall_band=overall,
         iec_62304_note=IEC_62304_NOTE.format(
